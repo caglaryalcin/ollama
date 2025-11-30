@@ -21,4 +21,4 @@ iwr "caglaryalcin.com/ollama-del" -UseB | iex
 iwr "caglaryalcin.com/ollama" -UseB | iex
 ```
 
-<img width="747" height="1410" alt="image" src="https://github.com/user-attachments/assets/3ee59145-f829-4938-ba93-cdc5377c7c69" />
+<img width="748" height="1454" alt="image" src="https://github.com/user-attachments/assets/a4a5824d-9a91-4881-9c15-9833abbceee1" />
