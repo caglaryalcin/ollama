@@ -5,7 +5,7 @@ Write-Host "╚═════════════════════�
 # =============================================================================
 # 0. User Information
 # =============================================================================
-Write-Host "`n[0/13] User information..." -ForegroundColor Yellow
+Write-Host "`n[0/12] User information..." -ForegroundColor Yellow
 
 do {
     $wslUsername = Read-Host "Enter WSL username"
@@ -31,7 +31,7 @@ Write-Host "  ✓ Password: "("*"* $wslPassword.Length) -ForegroundColor Green
 # =============================================================================
 # 1. .wslconfig Configuration
 # =============================================================================
-Write-Host "`n[1/13] .wslconfig is being created..." -ForegroundColor Yellow
+Write-Host "`n[1/12] .wslconfig is being created..." -ForegroundColor Yellow
 
 $wslConfig = @"
 [wsl2]
@@ -49,7 +49,7 @@ Write-Host "  ✓ .wslconfig created" -ForegroundColor Green
 # =============================================================================
 # 2. Ubuntu Installation
 # =============================================================================
-Write-Host "`n[2/13] Ubuntu is loading..." -ForegroundColor Yellow
+Write-Host "`n[2/12] Installing Ubuntu..." -ForegroundColor Yellow
 wsl --install -d Ubuntu --no-launch *>$null
 Start-Sleep 5
 Write-Host "  ✓ Ubuntu has been installed" -ForegroundColor Green
@@ -57,7 +57,7 @@ Write-Host "  ✓ Ubuntu has been installed" -ForegroundColor Green
 # =============================================================================
 # 3. WSL First Start
 # =============================================================================
-Write-Host "`n[3/13] Ubuntu is starting up for the first time..." -ForegroundColor Yellow
+Write-Host "`n[3/12] Ubuntu is starting up for the first time..." -ForegroundColor Yellow
 wsl -d Ubuntu -u root -- bash -c "exit" 2>$null
 Start-Sleep 3
 Write-Host "  ✓ Ubuntu has been launched" -ForegroundColor Green
@@ -65,16 +65,18 @@ Write-Host "  ✓ Ubuntu has been launched" -ForegroundColor Green
 # =============================================================================
 # 4. User Creation
 # =============================================================================
-Write-Host "`n[4/13] User configuration..." -ForegroundColor Yellow
+Write-Host "`n[4/12] User configuration..." -ForegroundColor Yellow
 wsl -d Ubuntu -u root -- useradd -m -s /bin/bash $wslUsername 2>$null
 wsl -d Ubuntu -u root -- bash -c "echo '${wslUsername}:${wslPassword}' | chpasswd" 2>$null
 wsl -d Ubuntu -u root -- bash -c "usermod -aG sudo $wslUsername" 2>$null
-Write-Host "  ✓ User $wslUsername created" -ForegroundColor Green
+Write-Host "  ✓ User " -NoNewLine
+Write-Host "$wslUsername " -ForegroundColor Green -NoNewLine
+Write-Host "created"
 
 # =============================================================================
 # 5. Passwordless Sudo
 # =============================================================================
-Write-Host "`n[5/13] Sudo configuration..." -ForegroundColor Yellow
+Write-Host "`n[5/13] Sudo passwordless configuration..." -ForegroundColor Yellow
 wsl -d Ubuntu -u root -- bash -c "echo '$wslUsername ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/$wslUsername" 2>$null
 wsl -d Ubuntu -u root -- bash -c "chmod 0440 /etc/sudoers.d/$wslUsername" 2>$null
 Write-Host "  ✓ Passwordless sudo has been set up" -ForegroundColor Green
@@ -82,7 +84,7 @@ Write-Host "  ✓ Passwordless sudo has been set up" -ForegroundColor Green
 # =============================================================================
 # 6. WSL Configuration
 # =============================================================================
-Write-Host "`n[6/13] WSL Configuration..." -ForegroundColor Yellow
+Write-Host "`n[6/12] ⏳ wsl.conf Configuration..." -ForegroundColor Yellow
 wsl -d Ubuntu -u root -- bash -c "cat > /etc/wsl.conf << EOF
 [user]
 default=$wslUsername
@@ -104,18 +106,11 @@ Start-Sleep 2
 Write-Host "  ✓ WSL restarted with user $wslUsername" -ForegroundColor Green
 
 # =============================================================================
-# 7. System Update
+# 7. System Update & Docker Installation
 # =============================================================================
-Write-Host "`n[7/13] The system is updating..." -ForegroundColor Yellow
+Write-Host "`n[7/12] The system is updating and Docker is being installed..." -ForegroundColor Yellow
 wsl -d Ubuntu -u root -- bash -c 'DEBIAN_FRONTEND=noninteractive apt update -qq > /dev/null 2>&1'
 wsl -d Ubuntu -u root -- bash -c 'DEBIAN_FRONTEND=noninteractive apt upgrade -y -qq > /dev/null 2>&1'
-Write-Host "  ✓ The system has been updated" -ForegroundColor Green
-
-# =============================================================================
-# 8. Docker Installation
-# =============================================================================
-Write-Host "`n[8/13] Docker is being installed..." -ForegroundColor Yellow
-
 wsl -d Ubuntu -u root -- bash -c 'apt install -y -qq ca-certificates curl gnupg lsb-release > /dev/null 2>&1'
 wsl -d Ubuntu -u root -- bash -c 'mkdir -p /etc/apt/keyrings' 2>$null
 wsl -d Ubuntu -u root -- bash -c 'curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg 2>/dev/null'
@@ -146,17 +141,15 @@ Start-Sleep 2
 Write-Host "  ✓ WSL restarted" -ForegroundColor Green
 
 # =============================================================================
-# 9. NVIDIA Container Toolkit
+# 8. NVIDIA Container Toolkit
 # =============================================================================
-Write-Host "`n[9/13] NVIDIA Container Toolkit is being installed..." -ForegroundColor Yellow
+Write-Host "`n[8/12] NVIDIA Container Toolkit is being installed..." -ForegroundColor Yellow
 
 wsl -d Ubuntu -u root -- bash -c 'curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg 2>/dev/null'
 wsl -d Ubuntu -u root -- bash -c "curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' > /etc/apt/sources.list.d/nvidia-container-toolkit.list 2>/dev/null"
 wsl -d Ubuntu -u root -- bash -c 'apt update -qq > /dev/null 2>&1'
 wsl -d Ubuntu -u root -- bash -c 'apt install -y -qq nvidia-container-toolkit > /dev/null 2>&1'
 wsl -d Ubuntu -u root -- bash -c 'nvidia-ctk runtime configure --runtime=docker > /dev/null 2>&1'
-
-# Docker service override
 wsl -d Ubuntu -u root -- bash -c 'mkdir -p /etc/systemd/system/docker.service.d' 2>$null
 wsl -d Ubuntu -u root -- bash -c 'cat > /etc/systemd/system/docker.service.d/override.conf << EOF
 [Service]
@@ -168,7 +161,6 @@ wsl -d Ubuntu -u root -- bash -c 'systemctl daemon-reload' 2>$null
 wsl -d Ubuntu -u root -- bash -c 'systemctl restart docker' 2>$null
 Start-Sleep 5
 
-# NVIDIA test
 $nvidiaSmi = wsl -d Ubuntu -- nvidia-smi 2>$null
 if ($nvidiaSmi -match "NVIDIA-SMI") {
     Write-Host "  ✓ NVIDIA Container Toolkit has been installed and the GPU has been detected" -ForegroundColor Green
@@ -177,9 +169,9 @@ if ($nvidiaSmi -match "NVIDIA-SMI") {
 }
 
 # =============================================================================
-# 10. Ollama Container
+# 9. Ollama Container
 # =============================================================================
-Write-Host "`n[10/13] Ollama container is starting..." -ForegroundColor Yellow
+Write-Host "`n[9/12] Ollama container is starting..." -ForegroundColor Yellow
 
 wsl -d Ubuntu -- bash -c 'docker pull ollama/ollama' 2>$null | Out-Null
 wsl -d Ubuntu -- bash -c 'docker run -d --gpus=all --restart=always -p 0.0.0.0:11434:11434 --name ollama ollama/ollama' 2>$null | Out-Null
@@ -195,17 +187,17 @@ if ($containerCheck -match "Up") {
 }
 
 # =============================================================================
-# 11. Windows Firewall
+# 10. Windows Firewall
 # =============================================================================
-Write-Host "`n[11/13] Windows Firewall is being configured..." -ForegroundColor Yellow
+Write-Host "`n[10/12] Windows Firewall is being configured..." -ForegroundColor Yellow
 Get-NetFirewallRule -DisplayName "*Ollama*" -ErrorAction SilentlyContinue | Remove-NetFirewallRule 2>$null
 New-NetFirewallRule -DisplayName "Ollama WSL Docker" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 11434 -Profile Any -Enabled True *>$null
 Write-Host "  ✓ Firewall rule added" -ForegroundColor Green
 
 # =============================================================================
-# 12. Windows Startup Task
+# 11. Windows Startup Task
 # =============================================================================
-Write-Host "`n[12/13] Windows startup task is being created..." -ForegroundColor Yellow
+Write-Host "`n[11/12] Windows startup task is being created..." -ForegroundColor Yellow
 
 Unregister-ScheduledTask -TaskName "OllamaWSL" -Confirm:$false -ErrorAction SilentlyContinue 2>$null
 
@@ -230,9 +222,9 @@ Start-Sleep 10
 Write-Host "  ✓ The startup task has been created and WSL has been launched" -ForegroundColor Green
 
 # =============================================================================
-# 13. Status Checks
+# 12. Final Verification
 # =============================================================================
-Write-Host "`n[13/13] Status checks are being performed..." -ForegroundColor Yellow
+Write-Host "`n[12/12] Status checks are being performed..." -ForegroundColor Yellow
 
 $dockerStatus = wsl -d Ubuntu -- docker ps --filter "name=ollama" --format "{{.Status}}" 2>$null
 if ($dockerStatus -match "Up") {
